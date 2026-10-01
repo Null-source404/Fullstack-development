@@ -77,14 +77,53 @@ export const InfoModal: React.FC<InfoModalProps> = ({
           )}
 
           {type === 'guidelines' && (
-            <>
-              <h4 className="font-bold text-slate-900 text-base">Review Integrity Policy</h4>
-              <ul className="list-disc pl-5 space-y-1.5 text-slate-600">
-                <li>Reviews must contain at least 30 words detailing service quality, items purchased, or facility cleanliness.</li>
-                <li>No copy-pasted text from other review platforms.</li>
-                <li>Photos or receipts may be requested by moderation for random quality spot-checks.</li>
-              </ul>
-            </>
+            <div className="space-y-4">
+              <div className="p-3.5 bg-emerald-50 border border-emerald-200/80 rounded-2xl flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
+                <div className="text-xs text-emerald-900 leading-relaxed">
+                  <strong>Zero-Tolerance Integrity Standard:</strong> CoreTaskPro connects real patrons with genuine local merchants. Every review is inspected by human moderators and automated heuristics.
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">1. Firsthand Physical Visit Mandate</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  You must have personally patronized the business establishment within the past 90 days. Secondhand anecdotes, hearsay, or generic feedback without visiting the premises are strictly disqualified.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">2. Absolute Prohibition of AI & Automated Content</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  All submissions are parsed through language heuristic models. Using ChatGPT, Claude, bot scripts, or copy-pasting from Google Maps/Yelp triggers an instant disqualification and flag on your reviewer profile.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">3. Specific Detail Requirement (Minimum 30 Words)</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  Reviews must explicitly describe your interaction: specific dishes or beverages consumed, services rendered, wait times, staff hospitality, and overall facility ambiance. Vague one-liners like "great food, loved it" will be rejected.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">4. Conflicts of Interest & Bias</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  You may not review your own enterprise, your current employer, a family business, or a direct competitor. Reviewers must maintain total consumer independence.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">5. Verification Audits & Random Proof of Visit</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  Moderators may periodically request secondary verification (such as an itemized receipt, order ticket, or geotagged photograph) for spot-audit compliance before clearing larger payout balances.
+                </p>
+              </div>
+
+              <div className="p-3 bg-red-50 border border-red-200/80 rounded-xl text-xs text-red-800">
+                <strong>Enforcement & Penalties:</strong> Fabricated reviews result in immediate permanent account termination, forfeiture of pending rewards, and blacklisting of associated payout credentials.
+              </div>
+            </div>
           )}
 
           {(type === 'acceptable-use' || type === 'cookies' || type === 'how-it-works' || type === 'why-us') && (

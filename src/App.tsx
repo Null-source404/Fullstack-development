@@ -18,6 +18,7 @@ import { PlansPaymentView } from './components/dashboard/PlansPaymentView';
 import { ContactUsView } from './components/dashboard/ContactUsView';
 import { PesapalCheckoutModal } from './components/PesapalCheckoutModal';
 import { TaskModal } from './components/TaskModal';
+import { InfoModal } from './components/InfoModals';
 import { CheckCircle2, X } from 'lucide-react';
 
 export default function App() {
@@ -26,6 +27,9 @@ export default function App() {
   
   // Dashboard active tab
   const [dashboardTab, setDashboardTab] = useState<DashboardTab>('dashboard');
+
+  // Info modal state
+  const [infoModalType, setInfoModalType] = useState<'how-it-works' | 'terms' | 'why-us' | 'guidelines' | 'privacy' | 'acceptable-use' | 'cookies' | null>(null);
 
   // Currency: USD / KES
   const [currency, setCurrency] = useState<'USD' | 'KES'>('USD');
@@ -311,7 +315,15 @@ export default function App() {
           setActiveTaskModal(null);
           setIsCheckoutOpen(true);
         }}
+        onOpenGuidelines={() => setInfoModalType('guidelines')}
         onSubmitReview={handleSubmitReview}
+      />
+
+      {/* Global Info Modal for Review Integrity Guidelines & Policies */}
+      <InfoModal
+        type={infoModalType}
+        onClose={() => setInfoModalType(null)}
+        onOpenAuth={(mode) => handleOpenAuth(mode)}
       />
     </>
   );

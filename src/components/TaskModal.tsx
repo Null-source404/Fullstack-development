@@ -7,6 +7,7 @@ interface TaskModalProps {
   onClose: () => void;
   account: ReviewerAccount;
   onOpenCheckout: () => void;
+  onOpenGuidelines?: () => void;
   onSubmitReview: (review: SubmittedReview) => void;
 }
 
@@ -15,6 +16,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   onClose,
   account,
   onOpenCheckout,
+  onOpenGuidelines,
   onSubmitReview,
 }) => {
   const [rating, setRating] = useState(5);
@@ -22,6 +24,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const [reviewText, setReviewText] = useState(
     'Had a wonderful Sunday brunch at Harborview. The waterfront views of the Bay Bridge were spectacular, and the dim sum items were fresh and delicate. Service was prompt and friendly despite the weekend rush. Highly recommend their shrimp dumplings and egg tarts!'
   );
+  const [agreedToIntegrity, setAgreedToIntegrity] = useState(true);
+  const [showIntegrityCard, setShowIntegrityCard] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -206,9 +210,56 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 />
               </div>
 
+              {/* Review Integrity Guidelines Enforcement Box */}
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#0D7A6B]" />
+                    <span>Review Integrity Standard</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowIntegrityCard(!showIntegrityCard)}
+                    className="text-[11px] text-[#0D7A6B] hover:underline font-semibold cursor-pointer"
+                  >
+                    {showIntegrityCard ? 'Hide Rules' : 'View Rules'}
+                  </button>
+                </div>
+
+                {showIntegrityCard && (
+                  <div className="space-y-1.5 pt-1.5 border-t border-slate-200 text-slate-600 text-[11px] leading-relaxed">
+                    <p>• <strong>Firsthand Physical Visit:</strong> Must detail a real visit within the last 90 days.</p>
+                    <p>• <strong>Strict Anti-AI Policy:</strong> AI-generated, bot, or scraped reviews are automatically disqualified.</p>
+                    <p>• <strong>Detailed Feedback:</strong> Must detail ordered items, service speed, or facility ambiance (min 30 words).</p>
+                    <p>• <strong>Fraud Penalties:</strong> Fabricated submissions trigger immediate account suspension and forfeiture of rewards.</p>
+                    {onOpenGuidelines && (
+                      <button
+                        type="button"
+                        onClick={onOpenGuidelines}
+                        className="text-[11px] font-bold text-[#1D4ED8] hover:underline mt-1 block"
+                      >
+                        Read Full Official Integrity Policy →
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <label className="flex items-start gap-2 pt-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={agreedToIntegrity}
+                    onChange={(e) => setAgreedToIntegrity(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-300 text-[#0D7A6B] focus:ring-[#0D7A6B] cursor-pointer"
+                  />
+                  <span className="text-[11px] text-slate-700 font-medium leading-tight">
+                    I certify this is my honest firsthand experience. I adhere to the CoreTaskPro Review Integrity Guidelines.
+                  </span>
+                </label>
+              </div>
+
               <button
                 type="submit"
-                disabled={isSubmitting || !isSatisfiedWordCount}
+                disabled={isSubmitting || !isSatisfiedWordCount || !agreedToIntegrity}
                 className="w-full py-3 rounded-xl bg-[#0F3460] hover:bg-[#0c2a4f] disabled:bg-slate-300 text-white font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? (
