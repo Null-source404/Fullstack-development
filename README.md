@@ -1,11 +1,11 @@
-# [CoreTaskPro] - Client Web Application
+# CoreTaskPro - Client Web Application
 
-A responsive web application built for [Client type - small business].
+A responsive web application built for small business.
 
 ## Features
-- [Feature 1 - Booking system]
-- [Feature 2 - Admin dashboard]
-- [Feature 3 -  Pesapal payment integration]
+- Feature 1 - Booking system
+- Feature 2 - Admin dashboard
+- Feature 3 -  Pesapal payment integration
 
 ## Tech Stack
 - Frontend: Next.js
