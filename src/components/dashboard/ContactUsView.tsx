@@ -19,9 +19,9 @@ export const ContactUsView: React.FC<ContactUsViewProps> = ({
   account,
   onSendMessage,
 }) => {
-  const [name, setName] = useState(account.customerName || 'Newton Mass');
-  const [email, setEmail] = useState(account.customerEmail || 'nbyte893@gmail.com');
-  const [phone, setPhone] = useState(account.customerPhone || '0712345678');
+  const [name, setName] = useState(account.customerName || '');
+  const [email, setEmail] = useState(account.customerEmail || '');
+  const [phone, setPhone] = useState(account.customerPhone || '');
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
 
@@ -92,6 +92,7 @@ export const ContactUsView: React.FC<ContactUsViewProps> = ({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                placeholder="Your full name"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 focus:outline-none focus:border-[#1D4ED8]"
               />
             </div>
@@ -104,6 +105,7 @@ export const ContactUsView: React.FC<ContactUsViewProps> = ({
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 focus:outline-none focus:border-[#1D4ED8]"
               />
             </div>
@@ -116,6 +118,7 @@ export const ContactUsView: React.FC<ContactUsViewProps> = ({
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                placeholder="+1 (555) 000-0000"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 focus:outline-none focus:border-[#1D4ED8]"
               />
             </div>

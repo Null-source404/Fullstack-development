@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Check,
   Eye,
@@ -10,6 +10,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { ReviewerAccount } from '../../types';
+import { InfoModal } from '../InfoModals';
 
 interface AuthScreenProps {
   initialMode: 'login' | 'signup';
@@ -26,16 +27,29 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 }) => {
   const [mode, setMode] = useState<'login' | 'signup'>(initialMode);
   
-  // Form fields
-  const [fullName, setFullName] = useState('Newton Mass');
-  const [email, setEmail] = useState('newton@coretaskpro.com');
-  const [phone, setPhone] = useState('+1 (555) 349-8821');
-  const [password, setPassword] = useState('CoreTask2026!');
-  const [inviteCode, setInviteCode] = useState('B10791D6');
-  const [agreedToTerms, setAgreedToTerms] = useState(true);
+  // Clean form fields with empty initial values (placeholders for user to fill)
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Policy Modal state for clickable Terms & Guidelines
+  const [activePolicyModal, setActivePolicyModal] = useState<'terms' | 'guidelines' | 'privacy' | null>(null);
+
+  // Random invite code placeholder for the input field
+  const randomInvitePlaceholder = useMemo(() => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return `REF-${code}`;
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +69,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         return;
       }
       if (!agreedToTerms) {
-        setErrorMsg('Please agree to the reviewer code of conduct and terms');
+        setErrorMsg('Please agree to the Terms of Service and Review Integrity Guidelines');
         return;
       }
     } else {
@@ -74,26 +88,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       setIsLoading(false);
       onSuccess({
         isLoggedIn: true,
-        customerName: fullName || 'Newton Mass',
-        customerEmail: email || 'newton@coretaskpro.com',
-        customerPhone: phone || '+1 (555) 349-8821',
-        inviteCode: inviteCode || 'DEF8A083',
+        customerName: fullName.trim() || (email.split('@')[0] || 'Member'),
+        customerEmail: email.trim(),
+        customerPhone: phone.trim() || undefined,
+        inviteCode: inviteCode.trim().toUpperCase() || undefined,
       });
     }, 600);
-  };
-
-  const handleQuickDemoFill = () => {
-    if (mode === 'login') {
-      setEmail('newton@coretaskpro.com');
-      setPassword('CoreTask2026!');
-    } else {
-      setFullName('Newton Mass');
-      setEmail('newton@coretaskpro.com');
-      setPhone('+1 (555) 349-8821');
-      setPassword('CoreTask2026!');
-      setInviteCode('B10791D6');
-      setAgreedToTerms(true);
-    }
   };
 
   return (
@@ -109,7 +109,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             className="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Return to public site</span>
+            <span>Return</span>
           </button>
 
           {/* Brand Logo */}
@@ -132,21 +132,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               <span>{bannerNotice}</span>
             </div>
           )}
-
-          {/* Quick Demo Credentials Pill */}
-          <div className="mb-6 p-3 bg-teal-50/70 border border-teal-200/80 rounded-xl flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-teal-950 font-medium">
-              <KeyRound className="w-4 h-4 text-[#0D7A6B]" />
-              <span>1-Click Test Access:</span>
-            </div>
-            <button
-              type="button"
-              onClick={handleQuickDemoFill}
-              className="text-xs font-bold text-[#0D7A6B] hover:underline cursor-pointer bg-white px-2.5 py-1 rounded-md border border-teal-200 shadow-2xs"
-            >
-              Fill Demo Credentials
-            </button>
-          </div>
 
           <div className="mb-8">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -176,7 +161,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Newton Mass"
+                  placeholder="e.g. John Doe"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#0D7A6B] transition-colors"
                 />
               </div>
@@ -190,7 +175,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder="name@example.com"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#0D7A6B] transition-colors"
               />
             </div>
@@ -204,7 +189,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="e.g. +1 (555) 000-0000 or 0712345678"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#0D7A6B] transition-colors font-mono"
                 />
                 <span className="text-[11px] text-slate-400 mt-1 block">
@@ -221,7 +206,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 {mode === 'login' && (
                   <button
                     type="button"
-                    onClick={() => alert('Password reset verification dispatched to ' + email)}
+                    onClick={() => alert('Password reset verification dispatched to ' + (email || 'your email'))}
                     className="text-xs text-[#1D4ED8] hover:underline cursor-pointer"
                   >
                     Forgot password?
@@ -233,7 +218,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 8 characters"
+                  placeholder={mode === 'signup' ? 'Create a password (min 8 characters)' : 'Enter your password'}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#0D7A6B] transition-colors pr-10"
                 />
                 <button
@@ -249,14 +234,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             {mode === 'signup' && (
               <>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Referral invite code (optional)
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-slate-700">
+                      Referral invite code (optional)
+                    </label>
+                    <span className="text-[11px] text-slate-400">If invited by a friend</span>
+                  </div>
                   <input
                     type="text"
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value)}
-                    placeholder="B10791D6"
+                    placeholder={`e.g. ${randomInvitePlaceholder}`}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#0D7A6B] transition-colors uppercase font-mono"
                   />
                 </div>
@@ -267,10 +255,25 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     id="terms-check"
                     checked={agreedToTerms}
                     onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="mt-1 w-4 h-4 rounded text-[#0D7A6B] focus:ring-[#0D7A6B]"
+                    className="mt-1 w-4 h-4 rounded text-[#0D7A6B] focus:ring-[#0D7A6B] cursor-pointer"
                   />
                   <label htmlFor="terms-check" className="text-xs text-slate-600 leading-tight">
-                    I agree to the <span className="font-semibold text-slate-900 underline">Terms of Service</span> and verified <span className="font-semibold text-slate-900 underline">Review Integrity Guidelines</span>.
+                    I agree to the{' '}
+                    <button
+                      type="button"
+                      onClick={() => setActivePolicyModal('terms')}
+                      className="font-semibold text-slate-900 underline hover:text-[#0D7A6B] cursor-pointer"
+                    >
+                      Terms of Service
+                    </button>{' '}
+                    and verified{' '}
+                    <button
+                      type="button"
+                      onClick={() => setActivePolicyModal('guidelines')}
+                      className="font-semibold text-slate-900 underline hover:text-[#0D7A6B] cursor-pointer"
+                    >
+                      Review Integrity Guidelines
+                    </button>.
                   </label>
                 </div>
               </>
@@ -336,14 +339,32 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
         </div>
 
-        {/* Footer info */}
+        {/* Footer info with clickable policy links */}
         <div className="pt-6 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
           <div className="space-x-3">
-            <span>Terms</span>
+            <button
+              type="button"
+              onClick={() => setActivePolicyModal('terms')}
+              className="hover:text-slate-700 underline cursor-pointer"
+            >
+              Terms
+            </button>
             <span>·</span>
-            <span>Privacy</span>
+            <button
+              type="button"
+              onClick={() => setActivePolicyModal('privacy')}
+              className="hover:text-slate-700 underline cursor-pointer"
+            >
+              Privacy
+            </button>
             <span>·</span>
-            <span>Guidelines</span>
+            <button
+              type="button"
+              onClick={() => setActivePolicyModal('guidelines')}
+              className="hover:text-slate-700 underline cursor-pointer"
+            >
+              Guidelines
+            </button>
           </div>
           <span>Pesapal USD Verified</span>
         </div>
@@ -357,12 +378,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         <div className="absolute top-10 right-10 w-96 h-96 bg-teal-400/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-10 left-10 w-80 h-80 bg-blue-400/10 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 pt-4">
-          <span className="text-xs font-bold tracking-widest text-teal-200 uppercase bg-white/10 px-3 py-1 rounded-full">
-            CORE TASK PRO REVIEW NETWORK
-          </span>
-        </div>
-
         <div className="relative z-10 my-auto py-12 max-w-lg space-y-6">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-white">
             Honest reviews of the places you visit — paid directly in USD cash.
@@ -373,17 +388,39 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           </p>
         </div>
 
-        {/* Referral Callout Banner */}
-        <div className="relative z-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 text-xs text-slate-200 space-y-1">
-          <h4 className="font-bold text-white text-sm">
-            Member Invitation Applied
-          </h4>
-          <p>
-            Referral code <strong>B10791D6</strong> is linked. Your inviter receives their referral commission in USD when your initial plan clears.
-          </p>
-        </div>
+        {/* Referral Callout Banner - only included once the user has input the optional referral code */}
+        {inviteCode.trim().length > 0 ? (
+          <div className="relative z-10 bg-white/15 backdrop-blur-md border border-teal-300/40 rounded-2xl p-5 text-xs text-slate-100 space-y-1 transition-all">
+            <h4 className="font-bold text-teal-300 text-sm flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-teal-300" />
+              Member Invitation Applied
+            </h4>
+            <p>
+              Referral code <span className="font-mono font-bold text-teal-300">{inviteCode.trim().toUpperCase()}</span> is linked. Your inviter receives their referral commission in USD when your initial plan clears.
+            </p>
+          </div>
+        ) : (
+          <div className="relative z-10 bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-5 text-xs text-slate-200 space-y-1">
+            <h4 className="font-bold text-white text-sm">
+              Verified Review Platform
+            </h4>
+            <p className="text-slate-300">
+              Direct Pesapal payouts in USD. Reviews are verified within 24–48 hours and credited directly to your account.
+            </p>
+          </div>
+        )}
 
       </div>
+
+      {/* Info Modal for Terms of Service and Review Integrity Guidelines */}
+      <InfoModal
+        type={activePolicyModal}
+        onClose={() => setActivePolicyModal(null)}
+        onOpenAuth={(targetMode) => {
+          setActivePolicyModal(null);
+          setMode(targetMode);
+        }}
+      />
 
     </div>
   );

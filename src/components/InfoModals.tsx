@@ -47,33 +47,84 @@ export const InfoModal: React.FC<InfoModalProps> = ({
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
+        <div className="p-6 overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed max-h-[65vh]">
           {type === 'terms' && (
-            <>
-              <h4 className="font-bold text-slate-900 text-base">1. Reviewer Agreement</h4>
-              <p>
-                By enrolling as a reviewer on CoreTaskPro, you verify that all reviews you submit reflect genuine, firsthand interactions with the subject merchants. Fabricated reviews, automated AI-generated submissions, or coordinated rating campaigns are strictly prohibited.
-              </p>
+            <div className="space-y-4">
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700">
+                <strong>Platform Operating Agreement:</strong> By accessing CoreTaskPro, creating an account, or subscribing to a territory access plan, you agree to these Terms of Service. Please read them thoroughly.
+              </div>
 
-              <h4 className="font-bold text-slate-900 text-base pt-2">2. Compensation & Settlement</h4>
-              <p>
-                Reviews are compensated between $2.00 and $6.00 USD upon human moderation approval. Approved balances are maintained in USD and processed via secure Pesapal gateway payout channels.
-              </p>
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">1. Independent Reviewer Relationship</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  CoreTaskPro operates an independent feedback and market research platform connecting local merchants with genuine consumers. Enrolled reviewers operate strictly as independent consumer contributors and not as employees, agents, or partners of CoreTaskPro.
+                </p>
+              </div>
 
-              <h4 className="font-bold text-slate-900 text-base pt-2">3. Subscription Access</h4>
-              <p>
-                Territory proxy network access passes are charged as stated ($2.70 or $3.50/month). Cancellation can be enacted at any time from your account settings.
-              </p>
-            </>
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">2. Territory Plans, Subscriptions & Renewals</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  Territory subscription plans ($2.70/month for Regional Access / North America; $3.50/month for Global Access) unlock verified task listings within specified geographical jurisdictions. All plan transactions are processed securely in USD via Pesapal 3.0. Subscriptions remain active until cancelled by the user in account settings prior to the subsequent billing cycle.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">3. Review Moderation & Compensation Release</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  Task rewards ($2.00 to $6.00 USD per verified task) are awarded solely upon successful moderation clearance by our review audit team within 24 to 48 hours. Submissions that fail to satisfy word count, contain duplicate or plagiarized text, or violate our Review Integrity Guidelines will be rejected without remuneration.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">4. Withdrawals & Payout Gateways</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  Approved earnings are maintained in USD wallet balances. Withdrawals are disbursed through Pesapal payout channels (Direct Card, Mobile Money, or Bank Wire) to the account holder's registered recipient details. Standard banking clearing windows (2–4 hours for mobile wallets; 1–3 business days for international wire) apply.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">5. Anti-Fraud & Account Termination</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  Creating multiple reviewer profiles, employing proxy VPNs to spoof physical visits, utilizing automated language generation tools (bots, LLMs), or coordinating false reviews constitutes a material breach. Violators face immediate permanent account termination and forfeiture of pending unverified balances.
+                </p>
+              </div>
+            </div>
           )}
 
           {type === 'privacy' && (
-            <>
-              <h4 className="font-bold text-slate-900 text-base">Privacy & Data Handling</h4>
-              <p>
-                CoreTaskPro does not sell your personal identifiers. Contact information is strictly utilized to authenticate accounts, coordinate customer support, and route payment settlements through Pesapal API 3.0.
-              </p>
-            </>
+            <div className="space-y-4">
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700">
+                <strong>Data Privacy Commitment:</strong> CoreTaskPro complies with international privacy frameworks (GDPR and CCPA principles). We respect your privacy and never sell reviewer personal identifiers.
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">1. Information We Collect</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  We collect account registration data (legal name, email address, and payout contact number), review submission content (visit dates, rating, and written descriptions), and transactional logs necessary to disburse Pesapal settlements.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">2. Zero Payment Data Storage (PCI-DSS Compliance)</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  All payment transactions are encrypted and handled exclusively by Pesapal’s certified PCI-DSS Level 1 gateway. CoreTaskPro never receives, processes, or stores your credit card numbers, CVVs, or mobile money PINs on our servers.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">3. Use of Personal Information</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  Your information is utilized solely to: (a) authenticate your reviewer profile; (b) facilitate moderation verification; (c) transfer approved earnings via Pesapal; and (d) provide customer support communications.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">4. Data Retention & Erasure</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  You may request permanent deletion of your reviewer profile and associated personal data at any time by contacting support@coretaskpro.com, subject to legal recordkeeping obligations for financial transactions.
+                </p>
+              </div>
+            </div>
           )}
 
           {type === 'guidelines' && (
@@ -126,13 +177,58 @@ export const InfoModal: React.FC<InfoModalProps> = ({
             </div>
           )}
 
-          {(type === 'acceptable-use' || type === 'cookies' || type === 'how-it-works' || type === 'why-us') && (
-            <>
-              <h4 className="font-bold text-slate-900 text-base">Platform Standards</h4>
-              <p>
-                Every task on CoreTaskPro represents an active local merchant looking for legitimate customer experiences. Payouts are guaranteed for all verified, approved submissions.
-              </p>
-            </>
+          {type === 'acceptable-use' && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">1. Lawful & Constructive Conduct</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  Users agree to utilize CoreTaskPro strictly for authentic consumer evaluations. Threatening, profane, defamatory, or abusive commentary directed at merchant staff or business establishments will be immediately purged.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">2. Anti-Scraping & System Abuse</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  Reverse engineering platform APIs, deploying crawlers, scraping merchant coordinates, or orchestrating distributed denial of service attempts will result in legal action and IP blacklisting.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">3. Single Account Policy</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  Each reviewer may operate only one active account linked to their verifiable legal name and payout destination. Creating duplicate accounts to exploit introductory tasks or referral codes triggers an immediate global ban.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {type === 'cookies' && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">1. Essential Operational Cookies</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  CoreTaskPro uses strictly necessary session cookies to maintain your login credentials, preserve active review drafts, and ensure secure transaction handshake communication with Pesapal payment gateways.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">2. No Third-Party Tracking Advertising</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  We do not embed third-party advertising tracking pixels, behavioural retargeting beacons, or data broker cookies on our member dashboard.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {(type === 'how-it-works' || type === 'why-us') && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">Platform Operational Model</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  CoreTaskPro matches independent reviewers with local businesses seeking authentic customer feedback. Reviewers choose tasks in their subscribed territories, write firsthand reviews with at least 30 words, and earn $2–$6 USD per approved review paid through Pesapal.
+                </p>
+              </div>
+            </div>
           )}
         </div>
 
