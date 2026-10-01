@@ -1,0 +1,6 @@
+{
+  "name": "CoreTaskPro - Review & Earn Platform with Pesapal",
+  "description": "Write honest reviews of local businesses and get paid per approved review. Secure subscription checkout powered by Pesapal with mobile money and card processing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
