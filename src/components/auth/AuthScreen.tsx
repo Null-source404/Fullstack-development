@@ -150,7 +150,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
           <div className="mb-8">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              {mode === 'login' ? 'Sign in to your reviewer account' : 'Create your reviewer account'}
+              {mode === 'login' ? 'Sign in to your account' : 'Create your account'}
             </h2>
             <p className="mt-2 text-sm text-slate-600">
               {mode === 'login'
@@ -286,7 +286,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               ) : mode === 'login' ? (
                 <span>Sign in to Dashboard</span>
               ) : (
-                <span>Create Reviewer Account</span>
+                <span>Create Account</span>
               )}
             </button>
 
@@ -314,7 +314,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     }}
                     className="font-bold text-[#0F3460] hover:underline cursor-pointer"
                   >
-                    Register as Reviewer
+                    Create an account
                   </button>
                 </p>
               </>
