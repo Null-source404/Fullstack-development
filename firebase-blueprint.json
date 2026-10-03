@@ -1,0 +1,54 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Registered reviewer profile containing account standing, wallet balance, and territory membership",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The unique Firebase Auth UID" },
+        "fullName": { "type": "string", "description": "Legal name of the reviewer", "maxLength": 100 },
+        "email": { "type": "string", "description": "Account email address" },
+        "phone": { "type": "string", "description": "Contact or payout phone number", "maxLength": 30 },
+        "planId": { "type": "string", "description": "Active territory tier plan ID" },
+        "isSubscribed": { "type": "boolean", "description": "Whether the user holds an active territory pass" },
+        "walletBalanceUSD": { "type": "number", "description": "Approved balance in USD ready for withdrawal" },
+        "pendingBalanceUSD": { "type": "number", "description": "Balance in USD under moderation" },
+        "completedTasks": { "type": "number", "description": "Total count of approved tasks" },
+        "referralCode": { "type": "string", "description": "User's personal referral code" },
+        "invitedBy": { "type": "string", "description": "Referral code of inviter if applicable" },
+        "createdAt": { "type": "string", "description": "Account creation timestamp" },
+        "updatedAt": { "type": "string", "description": "Last update timestamp" }
+      },
+      "required": ["userId", "email"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "User submitted firsthand business evaluation",
+      "type": "object",
+      "properties": {
+        "reviewId": { "type": "string", "description": "Unique review record ID" },
+        "userId": { "type": "string", "description": "Auth UID of the reviewer" },
+        "authorName": { "type": "string", "description": "Reviewer public name", "maxLength": 100 },
+        "businessId": { "type": "string", "description": "Merchant listing identifier" },
+        "businessName": { "type": "string", "description": "Name of the reviewed business establishment" },
+        "rating": { "type": "number", "description": "Star rating from 1 to 5" },
+        "comment": { "type": "string", "description": "Firsthand feedback text (min 30 words)", "maxLength": 4000 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"], "description": "Current moderation state" },
+        "rewardUSD": { "type": "number", "description": "Reward amount in USD" },
+        "createdAt": { "type": "string", "description": "Submission timestamp" },
+        "updatedAt": { "type": "string", "description": "Moderation clearance timestamp" }
+      },
+      "required": ["reviewId", "userId", "businessId", "rating", "comment", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Stores private reviewer profile and wallet balance"
+    },
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Stores submitted task reviews for moderation and verification"
+    }
+  }
+}

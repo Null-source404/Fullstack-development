@@ -94,34 +94,34 @@ export const InfoModal: React.FC<InfoModalProps> = ({
           {type === 'privacy' && (
             <div className="space-y-4">
               <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700">
-                <strong>Data Privacy Commitment:</strong> CoreTaskPro complies with international privacy frameworks (GDPR and CCPA principles). We respect your privacy and never sell reviewer personal identifiers.
+                <strong>Data Privacy & Regulatory Compliance:</strong> CoreTaskPro complies with international privacy frameworks (GDPR Art. 5, CCPA/CPRA, and Kenya DPA). We enforce strict data minimization to limit storage and protect users and the platform from regulatory penalties.
               </div>
 
               <div>
-                <h4 className="font-bold text-slate-900 text-sm">1. Information We Collect</h4>
+                <h4 className="font-bold text-slate-900 text-sm">1. Data Minimization & Excessive Storage Limits</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  We collect account registration data (legal name, email address, and payout contact number), review submission content (visit dates, rating, and written descriptions), and transactional logs necessary to disburse Pesapal settlements.
+                  We collect only the minimum personal data strictly necessary to operate the review service: legal name, account email, contact/payout phone number, and submitted evaluation text. We explicitly do not collect biometric data, background location tracking, device contacts, or unnecessary personal identifiers, eliminating exposure to excessive data storage regulatory fines.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-bold text-slate-900 text-sm">2. Zero Payment Data Storage (PCI-DSS Compliance)</h4>
+                <h4 className="font-bold text-slate-900 text-sm">2. Data Retention & Automatic Database Purging</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  All payment transactions are encrypted and handled exclusively by Pesapal’s certified PCI-DSS Level 1 gateway. CoreTaskPro never receives, processes, or stores your credit card numbers, CVVs, or mobile money PINs on our servers.
+                  Active account records are stored securely in Google Cloud Firestore only while the reviewer account remains open. Transient task reservations, expired drafts, and temporary moderation logs older than 60 days are systematically purged to prevent cloud storage bloat and reduce data liability.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-bold text-slate-900 text-sm">3. Use of Personal Information</h4>
+                <h4 className="font-bold text-slate-900 text-sm">3. Zero Payment Data Storage (PCI-DSS Level 1 Compliance)</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  Your information is utilized solely to: (a) authenticate your reviewer profile; (b) facilitate moderation verification; (c) transfer approved earnings via Pesapal; and (d) provide customer support communications.
+                  Payment handling for territory passes and payout disbursements is routed through Pesapal’s certified PCI-DSS Level 1 encrypted gateway. CoreTaskPro servers never store, process, or transmit raw credit card numbers, CVVs, or mobile money PINs.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-bold text-slate-900 text-sm">4. Data Retention & Erasure</h4>
+                <h4 className="font-bold text-slate-900 text-sm">4. Zero Data Selling & Statutory User Rights</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  You may request permanent deletion of your reviewer profile and associated personal data at any time by contacting support@coretaskpro.com, subject to legal recordkeeping obligations for financial transactions.
+                  We never sell, rent, or trade personal data to third-party brokers. Enrolled reviewers possess the statutory right to request a complete copy of their stored data or demand permanent erasure ("Right to be Forgotten") within 30 days by emailing support@coretaskpro.com.
                 </p>
               </div>
             </div>
@@ -179,24 +179,35 @@ export const InfoModal: React.FC<InfoModalProps> = ({
 
           {type === 'acceptable-use' && (
             <div className="space-y-4">
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700">
+                <strong>Infrastructure & Content Protection Policy:</strong> This policy prevents malicious abuse, safeguards platform infrastructure from runaway compute charges, and guarantees a safe marketplace.
+              </div>
+
               <div>
-                <h4 className="font-bold text-slate-900 text-sm">1. Lawful & Constructive Conduct</h4>
+                <h4 className="font-bold text-slate-900 text-sm">1. Prohibition of Resource-Hijacking & High-Compute Jobs (Crypto Mining & DDoS)</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  Users agree to utilize CoreTaskPro strictly for authentic consumer evaluations. Threatening, profane, defamatory, or abusive commentary directed at merchant staff or business establishments will be immediately purged.
+                  Users and automated agents are strictly forbidden from utilizing platform infrastructure, API endpoints, or client runtime environments for cryptocurrency mining (including WebAssembly, background, or script miners), distributed denial-of-service (DDoS) orchestration, botnets, automated load-generation scripts, or heavy resource-hijacking jobs. Violations trigger immediate network termination and IP ban.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-bold text-slate-900 text-sm">2. Anti-Scraping & System Abuse</h4>
+                <h4 className="font-bold text-slate-900 text-sm">2. Prohibition of Harmful Content, Payloads & Injections</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  Reverse engineering platform APIs, deploying crawlers, scraping merchant coordinates, or orchestrating distributed denial of service attempts will result in legal action and IP blacklisting.
+                  Submitting malicious scripts, Cross-Site Scripting (XSS) payloads, SQL/NoSQL injection attempts, phishing links, trojans, automated form-fill bots, or defamatory attacks against business merchants is strictly illegal and subject to zero-tolerance removal.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-bold text-slate-900 text-sm">3. Single Account Policy</h4>
+                <h4 className="font-bold text-slate-900 text-sm">3. Single Account Policy & Identity Integrity</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  Each reviewer may operate only one active account linked to their verifiable legal name and payout destination. Creating duplicate accounts to exploit introductory tasks or referral codes triggers an immediate global ban.
+                  Each reviewer may operate only one active account linked to their verifiable legal name and payout destination. Operating multi-accounting rings to harvest introductory commissions or farm referral codes triggers an immediate global ban.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">4. Financial Liability for Infrastructure Exploitation</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  Any party that initiates, abets, or executes resource-hijacking, crypto mining, or DDoS attacks against CoreTaskPro explicitly agrees to be held legally and financially liable for all resultant cloud computing charges, database read/write costs, bandwidth egress fees, and technical remediation damages.
                 </p>
               </div>
             </div>
@@ -204,17 +215,35 @@ export const InfoModal: React.FC<InfoModalProps> = ({
 
           {type === 'cookies' && (
             <div className="space-y-4">
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700">
+                <strong>Cookie Transparency & Consent Standard:</strong> In compliance with the EU ePrivacy Directive and GDPR, we ensure transparent browser storage and halt third-party tracking spend until explicit opt-in is granted.
+              </div>
+
               <div>
-                <h4 className="font-bold text-slate-900 text-sm">1. Essential Operational Cookies</h4>
+                <h4 className="font-bold text-slate-900 text-sm">1. Transparent Browser Storage Categorization</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  CoreTaskPro uses strictly necessary session cookies to maintain your login credentials, preserve active review drafts, and ensure secure transaction handshake communication with Pesapal payment gateways.
+                  CoreTaskPro uses strictly necessary browser storage (session tokens, CSRF protection, and Pesapal transaction verification callback handshakes). These are essential for account security and payout processing and do not require prior opt-in under international standards.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-bold text-slate-900 text-sm">2. No Third-Party Tracking Advertising</h4>
+                <h4 className="font-bold text-slate-900 text-sm">2. Halting Third-Party Tracking Until Explicit Opt-In</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  We do not embed third-party advertising tracking pixels, behavioural retargeting beacons, or data broker cookies on our member dashboard.
+                  All non-essential third-party analytics, behavioral tracking, and advertising tracking spend are completely halted and blocked by default. No third-party tracking scripts execute until you explicitly choose "Accept All" on the Cookie Consent Banner.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">3. Zero Covert Fingerprinting & Zero Tracking Resale</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  We do not deploy canvas fingerprinting, audio fingerprinting, device beacons, or cross-site tracking cookies. We never monetize or sell browser cookie profiles to third-party ad exchanges or data brokers.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">4. Managing & Revoking Cookie Choices</h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  You can inspect or delete cookies at any time via your browser settings, or reset your preferences by clearing the "coretaskpro_cookie_consent" key in your browser local storage.
                 </p>
               </div>
             </div>

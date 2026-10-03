@@ -4,13 +4,24 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
-  KeyRound,
   ShieldCheck,
   Sparkles,
-  DollarSign
 } from 'lucide-react';
 import { ReviewerAccount } from '../../types';
 import { InfoModal } from '../InfoModals';
+import {
+  auth,
+  googleProvider,
+  signInWithPopup,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  sendEmailVerification,
+  db,
+  doc,
+  getDoc,
+  setDoc,
+} from '../../lib/firebase';
 
 interface AuthScreenProps {
   initialMode: 'login' | 'signup';
@@ -37,6 +48,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   // Policy Modal state for clickable Terms & Guidelines
   const [activePolicyModal, setActivePolicyModal] = useState<'terms' | 'guidelines' | 'privacy' | null>(null);
@@ -51,9 +63,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     return `REF-${code}`;
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setSuccessMsg(null);
 
     if (mode === 'signup') {
       if (!fullName.trim()) {
@@ -68,11 +81,72 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         setErrorMsg('Please provide your contact/payout phone number');
         return;
       }
+      if (!password || password.length < 6) {
+        setErrorMsg('Password must be at least 6 characters');
+        return;
+      }
       if (!agreedToTerms) {
         setErrorMsg('Please agree to the Terms of Service and Review Integrity Guidelines');
         return;
       }
+
+      setIsLoading(true);
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+        const user = userCredential.user;
+
+        try {
+          await sendEmailVerification(user);
+        } catch {
+          // Non-blocking if rate limited
+        }
+
+        const userProfile = {
+          userId: user.uid,
+          fullName: fullName.trim(),
+          email: email.trim().toLowerCase(),
+          phone: phone.trim(),
+          planId: 'regional',
+          isSubscribed: false,
+          walletBalanceUSD: 0,
+          pendingBalanceUSD: 0,
+          completedTasks: 0,
+          referralCode: 'REF-' + user.uid.substring(0, 6).toUpperCase(),
+          invitedBy: inviteCode.trim().toUpperCase() || '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        try {
+          await setDoc(doc(db, 'users', user.uid), userProfile);
+        } catch (dbErr) {
+          console.warn('Profile write notice:', dbErr);
+        }
+
+        setIsLoading(false);
+        onSuccess({
+          isLoggedIn: true,
+          customerName: fullName.trim(),
+          customerEmail: email.trim(),
+          customerPhone: phone.trim(),
+          inviteCode: userProfile.referralCode,
+        });
+      } catch (err: any) {
+        setIsLoading(false);
+        if (err.code === 'auth/email-already-in-use') {
+          setErrorMsg('An account with this email already exists. Please sign in instead.');
+        } else if (err.code === 'auth/invalid-email') {
+          setErrorMsg('The email address format is invalid.');
+        } else if (err.code === 'auth/weak-password') {
+          setErrorMsg('Password should be at least 6 characters.');
+        } else if (err.code === 'auth/operation-not-allowed') {
+          setErrorMsg('Email/password authentication is pending console activation. Please use "Continue with Google" for instant 1-click access.');
+        } else {
+          setErrorMsg(err.message || 'Authentication failed. Please verify credentials.');
+        }
+      }
     } else {
+      // Login
       if (!email.trim()) {
         setErrorMsg('Please enter your account email');
         return;
@@ -81,19 +155,118 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         setErrorMsg('Please enter your password');
         return;
       }
-    }
 
+      setIsLoading(true);
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+        const user = userCredential.user;
+
+        let profileName = user.displayName || email.split('@')[0] || 'Reviewer';
+        let profilePhone = '';
+        let refCode = 'REF-' + user.uid.substring(0, 6).toUpperCase();
+
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            profileName = data.fullName || profileName;
+            profilePhone = data.phone || '';
+            refCode = data.referralCode || refCode;
+          }
+        } catch (dbErr) {
+          console.warn('Profile read notice:', dbErr);
+        }
+
+        setIsLoading(false);
+        onSuccess({
+          isLoggedIn: true,
+          customerName: profileName,
+          customerEmail: user.email || email.trim(),
+          customerPhone: profilePhone,
+          inviteCode: refCode,
+        });
+      } catch (err: any) {
+        setIsLoading(false);
+        if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+          setErrorMsg('Invalid email or password. Please verify and try again.');
+        } else if (err.code === 'auth/operation-not-allowed') {
+          setErrorMsg('Email/password authentication is pending console activation. Please use "Continue with Google" for instant 1-click access.');
+        } else {
+          setErrorMsg(err.message || 'Unable to sign in. Please try again.');
+        }
+      }
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      let profileName = user.displayName || 'Reviewer';
+      let profilePhone = user.phoneNumber || '';
+      let refCode = 'REF-' + user.uid.substring(0, 6).toUpperCase();
+
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        if (!userDoc.exists()) {
+          await setDoc(userRef, {
+            userId: user.uid,
+            fullName: profileName,
+            email: user.email || '',
+            phone: profilePhone,
+            planId: 'regional',
+            isSubscribed: false,
+            walletBalanceUSD: 0,
+            pendingBalanceUSD: 0,
+            completedTasks: 0,
+            referralCode: refCode,
+            invitedBy: inviteCode.trim().toUpperCase() || '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+        } else {
+          const data = userDoc.data();
+          profileName = data.fullName || profileName;
+          profilePhone = data.phone || profilePhone;
+          refCode = data.referralCode || refCode;
+        }
+      } catch (dbErr) {
+        console.warn('Firestore doc check notice:', dbErr);
+      }
+
       setIsLoading(false);
       onSuccess({
         isLoggedIn: true,
-        customerName: fullName.trim() || (email.split('@')[0] || 'Member'),
-        customerEmail: email.trim(),
-        customerPhone: phone.trim() || undefined,
-        inviteCode: inviteCode.trim().toUpperCase() || undefined,
+        customerName: profileName,
+        customerEmail: user.email || '',
+        customerPhone: profilePhone,
+        inviteCode: refCode,
       });
-    }, 600);
+    } catch (err: any) {
+      setIsLoading(false);
+      if (err.code !== 'auth/popup-closed-by-user') {
+        setErrorMsg(err.message || 'Google sign-in could not be completed.');
+      }
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim() || !email.includes('@')) {
+      setErrorMsg('Please type your registered email address into the Email field below first, then click Forgot password.');
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      setSuccessMsg(`Password reset link dispatched to ${email.trim()}. Please check your email inbox.`);
+      setErrorMsg(null);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Could not send password reset email. Please ensure the email address is correct.');
+    }
   };
 
   return (
@@ -145,10 +318,51 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           </div>
 
           {errorMsg && (
-            <div className="mb-5 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
+            <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
               {errorMsg}
             </div>
           )}
+
+          {successMsg && (
+            <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{successMsg}</span>
+            </div>
+          )}
+
+          {/* 1-Click Google Sign-In */}
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 font-bold text-sm shadow-2xs transition-all active:scale-98 cursor-pointer mb-5"
+          >
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+              />
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <div className="flex items-center gap-3 my-5">
+            <div className="h-px bg-slate-200 flex-1" />
+            <span className="text-[11px] uppercase text-slate-400 font-bold tracking-wider">or continue with email</span>
+            <div className="h-px bg-slate-200 flex-1" />
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 text-xs sm:text-sm">
             
@@ -206,7 +420,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 {mode === 'login' && (
                   <button
                     type="button"
-                    onClick={() => alert('Password reset verification dispatched to ' + (email || 'your email'))}
+                    onClick={handleForgotPassword}
                     className="text-xs text-[#1D4ED8] hover:underline cursor-pointer"
                   >
                     Forgot password?

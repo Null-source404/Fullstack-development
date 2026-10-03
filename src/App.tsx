@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppView, DashboardTab, SubscriptionPlan, ReviewTask, ReviewerAccount, PesapalTransaction, SubmittedReview, SupportMessage } from './types';
 import { SUBSCRIPTION_PLANS, AVAILABLE_TASKS, INITIAL_ACCOUNT } from './data/mockData';
+import { auth, onAuthStateChanged, signOut, db, doc, getDoc } from './lib/firebase';
 import { LandingPage } from './components/public/LandingPage';
 import { AuthScreen } from './components/auth/AuthScreen';
 import { DashboardLayout } from './components/dashboard/DashboardLayout';
@@ -19,6 +20,7 @@ import { ContactUsView } from './components/dashboard/ContactUsView';
 import { PesapalCheckoutModal } from './components/PesapalCheckoutModal';
 import { TaskModal } from './components/TaskModal';
 import { InfoModal } from './components/InfoModals';
+import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { CheckCircle2, X } from 'lucide-react';
 
 export default function App() {
@@ -54,6 +56,40 @@ export default function App() {
 
   // Reviewer Account State (initialized to logged out so user must have account first)
   const [account, setAccount] = useState<ReviewerAccount>(INITIAL_ACCOUNT);
+
+  // Sync Firebase Auth session on mount / changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        let name = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Reviewer Member';
+        let phone = firebaseUser.phoneNumber || '';
+        let refCode = 'REF-' + firebaseUser.uid.substring(0, 6).toUpperCase();
+
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            name = data.fullName || name;
+            phone = data.phone || phone;
+            refCode = data.referralCode || refCode;
+          }
+        } catch (err) {
+          console.warn('Sync profile error:', err);
+        }
+
+        setAccount((prev) => ({
+          ...prev,
+          isLoggedIn: true,
+          customerName: name,
+          customerEmail: firebaseUser.email || '',
+          customerPhone: phone || prev.customerPhone,
+          inviteCode: refCode,
+        }));
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -130,11 +166,16 @@ export default function App() {
   };
 
   // Sign out
-  const handleSignOut = () => {
-    setAccount((prev) => ({
-      ...prev,
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.warn('Sign out notice:', err);
+    }
+    setAccount({
+      ...INITIAL_ACCOUNT,
       isLoggedIn: false,
-    }));
+    });
     setAppView('landing');
     showToast('Signed out of CoreTaskPro.');
   };
@@ -237,6 +278,7 @@ export default function App() {
           onTabChange={(tab) => setDashboardTab(tab)}
           account={account}
           onSignOut={handleSignOut}
+          onOpenPolicy={(type) => setInfoModalType(type)}
         >
           {dashboardTab === 'dashboard' && (
             <DashboardHomeView
@@ -317,6 +359,11 @@ export default function App() {
         }}
         onOpenGuidelines={() => setInfoModalType('guidelines')}
         onSubmitReview={handleSubmitReview}
+      />
+
+      {/* Cookie Transparency & Tracking Consent Banner */}
+      <CookieConsentBanner
+        onOpenPolicy={(type) => setInfoModalType(type)}
       />
 
       {/* Global Info Modal for Review Integrity Guidelines & Policies */}

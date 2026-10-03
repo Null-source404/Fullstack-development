@@ -23,6 +23,7 @@ interface DashboardLayoutProps {
   onTabChange: (tab: DashboardTab) => void;
   account: ReviewerAccount;
   onSignOut: () => void;
+  onOpenPolicy?: (type: 'how-it-works' | 'terms' | 'why-us' | 'guidelines' | 'privacy' | 'acceptable-use' | 'cookies') => void;
   children: React.ReactNode;
 }
 
@@ -31,6 +32,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   onTabChange,
   account,
   onSignOut,
+  onOpenPolicy,
   children,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -192,10 +194,47 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         )}
 
         {/* Dynamic Main Workspace Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="max-w-6xl mx-auto">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 flex flex-col justify-between">
+          <div className="max-w-6xl mx-auto w-full">
             {children}
           </div>
+
+          <footer className="max-w-6xl mx-auto w-full pt-8 mt-12 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+            <p>© 2026 CoreTaskPro. All rights reserved.</p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => onOpenPolicy?.('privacy')}
+                className="hover:text-slate-700 underline cursor-pointer"
+              >
+                Privacy
+              </button>
+              <span>·</span>
+              <button
+                type="button"
+                onClick={() => onOpenPolicy?.('cookies')}
+                className="hover:text-slate-700 underline cursor-pointer"
+              >
+                Cookies
+              </button>
+              <span>·</span>
+              <button
+                type="button"
+                onClick={() => onOpenPolicy?.('acceptable-use')}
+                className="hover:text-slate-700 underline cursor-pointer"
+              >
+                Acceptable Use
+              </button>
+              <span>·</span>
+              <button
+                type="button"
+                onClick={() => onOpenPolicy?.('guidelines')}
+                className="hover:text-slate-700 underline cursor-pointer"
+              >
+                Guidelines
+              </button>
+            </div>
+          </footer>
         </main>
 
       </div>
