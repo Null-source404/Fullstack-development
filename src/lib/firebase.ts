@@ -81,9 +81,12 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 export async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error('Please check your Firebase configuration.');
+  } catch (error: any) {
+    if (error?.code === 'unavailable' || (error instanceof Error && error.message.includes('offline'))) {
+      // Offline mode active: Firestore gracefully caches locally until connection is active
+      console.info('Firestore initialized in offline-first mode.');
+    } else {
+      console.warn('Firestore connection check notice:', error?.message || error);
     }
   }
 }
