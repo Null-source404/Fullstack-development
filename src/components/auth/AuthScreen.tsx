@@ -70,7 +70,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
     if (mode === 'signup') {
       if (!fullName.trim()) {
-        setErrorMsg('Please enter your full legal name');
+        setErrorMsg('Please enter your full name');
         return;
       }
       if (!email.trim() || !email.includes('@')) {
@@ -78,7 +78,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         return;
       }
       if (!phone.trim()) {
-        setErrorMsg('Please provide your contact/payout phone number');
+        setErrorMsg('Please enter your phone number');
         return;
       }
       if (!password || password.length < 6) {
@@ -437,7 +437,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             {mode === 'signup' && (
               <div>
                 <label className="block font-semibold text-slate-700 mb-1.5">
-                  Full legal name
+                  Full name
                 </label>
                 <input
                   type="text"
@@ -465,7 +465,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             {mode === 'signup' && (
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">
-                  Contact / Payout Phone Number
+                  Phone number
                 </label>
                 <input
                   type="tel"
@@ -475,7 +475,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#0D7A6B] transition-colors font-mono"
                 />
                 <span className="text-[11px] text-slate-400 mt-1 block">
-                  Used for plan verification and Pesapal USD payouts.
+                  Used for account notifications and payouts.
                 </span>
               </div>
             )}

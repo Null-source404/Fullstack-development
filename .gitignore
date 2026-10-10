@@ -1,8 +1,53 @@
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
+
+# Production builds & cache
 build/
 dist/
 coverage/
+.vite/
+.vite-temp/
+
+# Operating system files
 .DS_Store
+Thumbs.db
+
+# Logs
 *.log
-.env*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables & secrets (CRITICAL: Never commit to GitHub)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# Private keys, certificates & service credentials
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+id_rsa*
+id_ed25519*
+*serviceAccountKey*.json
+*service-account*.json
+*credentials*.json
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Whitelist safe template
 !.env.example
+

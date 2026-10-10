@@ -28,14 +28,26 @@ export const AvailableTasksView: React.FC<AvailableTasksViewProps> = ({
   const [selectedCountry, setSelectedCountry] = useState('All countries');
   const [selectedCategory, setSelectedCategory] = useState('All categories');
 
-  // Filter tasks
-  const filteredTasks = tasks.filter((task) => {
-    const matchesSearch = task.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCountry = selectedCountry === 'All countries' || task.country === selectedCountry;
-    const matchesCategory = selectedCategory === 'All categories' || task.category === selectedCategory;
-    return matchesSearch && matchesCountry && matchesCategory;
-  });
+  // Filter and prioritize tasks
+  const filteredTasks = tasks
+    .filter((task) => {
+      const matchesSearch =
+        task.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        task.location.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCountry = selectedCountry === 'All countries' || task.country === selectedCountry;
+      const matchesCategory = selectedCategory === 'All categories' || task.category === selectedCategory;
+      return matchesSearch && matchesCountry && matchesCategory;
+    })
+    .sort((a, b) => {
+      // Prioritize operating country tasks to the top if set
+      if (account.operatingCountry) {
+        const aIsHome = a.country === account.operatingCountry;
+        const bIsHome = b.country === account.operatingCountry;
+        if (aIsHome && !bIsHome) return -1;
+        if (!aIsHome && bIsHome) return 1;
+      }
+      return b.reward - a.reward;
+    });
 
   return (
     <div className="space-y-6">
@@ -78,6 +90,8 @@ export const AvailableTasksView: React.FC<AvailableTasksViewProps> = ({
               <option value="Canada">Canada</option>
               <option value="Australia">Australia</option>
               <option value="New Zealand">New Zealand</option>
+              <option value="United Kingdom">United Kingdom</option>
+              <option value="Global Remote">Global Remote</option>
             </select>
           </div>
 
@@ -92,6 +106,9 @@ export const AvailableTasksView: React.FC<AvailableTasksViewProps> = ({
               <option value="Restaurants & Food">Restaurants & Food</option>
               <option value="Auto Services">Auto Services</option>
               <option value="Health & Beauty">Health & Beauty</option>
+              <option value="Hotels & Travel">Hotels & Travel</option>
+              <option value="Electronics & Repairs">Electronics & Repairs</option>
+              <option value="Software & FinTech">Software & FinTech</option>
             </select>
           </div>
 
@@ -128,6 +145,11 @@ export const AvailableTasksView: React.FC<AvailableTasksViewProps> = ({
                 <span className="text-[11px] font-semibold bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full">
                   {task.category}
                 </span>
+                {account.operatingCountry && task.country === account.operatingCountry && (
+                  <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Your Territory
+                  </span>
+                )}
                 {!account.isSubscribed && (
                   <span className="text-[11px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
                     Locked

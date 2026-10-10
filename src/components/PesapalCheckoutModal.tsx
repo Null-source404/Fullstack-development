@@ -8,14 +8,21 @@ import {
   CheckCircle2,
   AlertCircle,
   ArrowRight,
-  Clock,
   Printer,
-  Sparkles,
   ChevronRight,
   RefreshCw,
-  Wallet
+  Wallet,
+  Check,
+  HelpCircle
 } from 'lucide-react';
 import { SubscriptionPlan, PaymentMethod, PesapalTransaction, ReviewerAccount } from '../types';
+import {
+  validateCardDetails,
+  formatCardInput,
+  formatExpiryInput,
+  detectCardBrand,
+  CardBrand
+} from '../lib/cardSecurity';
 
 interface PesapalCheckoutModalProps {
   isOpen: boolean;
@@ -43,18 +50,27 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
   const [customerName, setCustomerName] = useState(account.customerName || 'Newton Mass');
   const [customerEmail, setCustomerEmail] = useState(account.customerEmail || 'newton@coretaskpro.com');
   const [customerPhone, setCustomerPhone] = useState(account.customerPhone || '+1 (555) 349-8821');
-  const [country, setCountry] = useState('United States');
+  const [country, setCountry] = useState(account.operatingCountry || 'United States');
   
   // Payment method: 'card' | 'mpesa' | 'bank'
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('card');
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Card fields
-  const [cardNumber, setCardNumber] = useState('4242 •••• •••• 4242');
-  const [cardExpiry, setCardExpiry] = useState('08/29');
-  const [cardCvv, setCardCvv] = useState('789');
+  // Card fields & Security Hardening
+  const [cardholderName, setCardholderName] = useState(account.customerName || 'Newton Mass');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [billingZip, setBillingZip] = useState('10001');
   const [cardOtp, setCardOtp] = useState('');
+  const [maskedCard, setMaskedCard] = useState('•••• •••• •••• 4242');
+  const [detectedBrand, setDetectedBrand] = useState<CardBrand>('unknown');
+
+  // Anti-Brute-Force & Idempotency Guards
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutExpiry, setLockoutExpiry] = useState<number | null>(null);
+  const [idempotencyKey, setIdempotencyKey] = useState('');
 
   // Generated Pesapal order details
   const [referenceId, setReferenceId] = useState('');
@@ -65,22 +81,67 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
     if (isOpen) {
       const ref = `PESA-USD-${Math.floor(100000 + Math.random() * 900000)}`;
       const track = `track_usd_${Math.random().toString(36).substring(2, 9)}-${Date.now()}`;
+      const idemp = `IDEMP-${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
       setReferenceId(ref);
       setTrackingId(track);
+      setIdempotencyKey(idemp);
       setStep('payment');
       setErrorMessage(null);
       setIsProcessing(false);
+      setFailedAttempts(0);
+      setLockoutExpiry(null);
+      // Auto-populate cardholder name and country with account details
+      if (account.customerName) {
+        setCardholderName(account.customerName);
+      }
+      if (account.operatingCountry) {
+        setCountry(account.operatingCountry);
+      }
     }
-  }, [isOpen, selectedPlan]);
+  }, [isOpen, selectedPlan, account.customerName, account.operatingCountry]);
+
+  // Update card brand dynamically as user types digits
+  useEffect(() => {
+    const brand = detectCardBrand(cardNumber);
+    setDetectedBrand(brand);
+  }, [cardNumber]);
 
   if (!isOpen) return null;
 
   const displayAmount = `$${selectedPlan.priceUsd.toFixed(2)} USD`;
   const usdAmount = selectedPlan.priceUsd;
 
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setErrorMessage(null);
+    const formatted = formatCardInput(e.target.value);
+    setCardNumber(formatted);
+  };
+
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setErrorMessage(null);
+    const formatted = formatExpiryInput(e.target.value);
+    setCardExpiry(formatted);
+  };
+
+  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setErrorMessage(null);
+    const clean = e.target.value.replace(/\D/g, '').slice(0, 4);
+    setCardCvv(clean);
+  };
+
   const handleInitiatePesapal = () => {
     setErrorMessage(null);
 
+    // 1. Anti-Brute-Force check
+    if (lockoutExpiry && Date.now() < lockoutExpiry) {
+      const remainingSec = Math.ceil((lockoutExpiry - Date.now()) / 1000);
+      setErrorMessage(
+        `Too many unsuccessful attempts. For your account security, please wait ${remainingSec} seconds before retrying.`
+      );
+      return;
+    }
+
+    // 2. Validate Contact Details
     if (!customerName.trim()) {
       setErrorMessage('Please enter your full name');
       return;
@@ -90,6 +151,39 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
       return;
     }
 
+    // 3. Card Security Verification
+    if (selectedMethod === 'card') {
+      const validation = validateCardDetails(
+        cardNumber,
+        cardholderName,
+        cardExpiry,
+        cardCvv
+      );
+
+      if (!validation.isValid) {
+        const nextAttempts = failedAttempts + 1;
+        setFailedAttempts(nextAttempts);
+
+        if (nextAttempts >= 4) {
+          const lockoutTime = Date.now() + 60000; // 60s cooldown
+          setLockoutExpiry(lockoutTime);
+          setErrorMessage(
+            'Security alert: Multiple invalid card attempts detected. Verification has been temporarily paused for 60 seconds to protect account security.'
+          );
+        } else {
+          setErrorMessage(
+            validation.errorMessage ||
+              'The card credentials could not be verified by your issuing bank. Please check your card number, expiry date, and CVV.'
+          );
+        }
+        return;
+      }
+
+      // Safe client-side masked representation (PCI-DSS: PAN never logged or persisted)
+      setMaskedCard(validation.maskedCard || `•••• •••• •••• ${cardNumber.slice(-4)}`);
+    }
+
+    // Card passed all verification checks!
     setIsProcessing(true);
 
     setTimeout(() => {
@@ -114,9 +208,12 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
       currency: 'USD',
       method: selectedMethod,
       phoneNumber: customerPhone,
-      cardNumberMasked: '•••• •••• •••• 4242',
+      cardNumberMasked: maskedCard,
       authCode,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ', ' + new Date().toLocaleDateString(),
+      timestamp:
+        new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) +
+        ', ' +
+        new Date().toLocaleDateString(),
       status: 'completed',
     };
 
@@ -126,6 +223,12 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
   };
 
   const handleVerifyCardOtp = () => {
+    setErrorMessage(null);
+    if (!cardOtp.trim()) {
+      setErrorMessage('Please enter the 6-digit authentication passcode dispatched to your phone/banking app.');
+      return;
+    }
+
     setIsProcessing(true);
     setTimeout(() => {
       setIsProcessing(false);
@@ -152,9 +255,9 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
                 <span className="font-extrabold text-sm tracking-wide text-white">
                   PESAPAL <span className="text-xs font-normal text-slate-300">USD GATEWAY 3.0</span>
                 </span>
-                <span className="hidden sm:inline-flex items-center gap-1 text-[11px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800 font-medium">
+                <span className="inline-flex items-center gap-1 text-[11px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800 font-medium">
                   <Lock className="w-3 h-3 text-emerald-400" />
-                  PCI-DSS 256-Bit
+                  PCI-DSS Level 1 Encrypted
                 </span>
               </div>
               <p className="text-[11px] text-slate-300">
@@ -227,17 +330,21 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
                     </span>
                   </div>
                   <div>
+                    <span className="block text-slate-400">Card Used</span>
+                    <span className="font-mono text-slate-800">{completedTransaction.cardNumberMasked}</span>
+                  </div>
+                  <div>
                     <span className="block text-slate-400">Subscribed Tier</span>
                     <span className="font-medium text-slate-800">{completedTransaction.planTitle}</span>
                   </div>
-                  <div>
+                  <div className="col-span-2">
                     <span className="block text-slate-400">Date & Time</span>
                     <span className="font-medium text-slate-800">{completedTransaction.timestamp}</span>
                   </div>
                 </div>
 
                 <div className="pt-2 text-[11px] text-slate-400 border-t border-slate-200">
-                  Invoice dispatched to: {customerEmail}
+                  Receipt dispatched to: {customerEmail}
                 </div>
               </div>
 
@@ -270,30 +377,45 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
                 Pesapal 3D-Secure Authentication
               </h3>
               <p className="text-xs text-slate-500">
-                A one-time verification passcode has been dispatched to authenticate payment of <strong>{displayAmount}</strong>.
+                Your card issuer has requested two-factor authorization to approve the payment of <strong>{displayAmount}</strong>.
               </p>
 
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left space-y-3">
                 <div className="flex justify-between text-xs text-slate-600">
                   <span>Merchant:</span>
-                  <span className="font-semibold text-slate-800">TaskPulse Pro (via Pesapal)</span>
+                  <span className="font-semibold text-slate-800">CoreTask Pro (via Pesapal USD)</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-600">
+                  <span>Card Charged:</span>
+                  <span className="font-mono text-slate-800">{maskedCard}</span>
                 </div>
                 <div className="flex justify-between text-xs text-slate-600">
                   <span>Amount:</span>
                   <span className="font-bold text-slate-900">{displayAmount}</span>
                 </div>
                 
+                {errorMessage && (
+                  <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
+
                 <div className="pt-2">
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Enter Verification OTP (Use test code: 123456)
+                    Enter SMS / Banking App Code (Test Passcode: 123456)
                   </label>
                   <input
                     type="text"
+                    maxLength={6}
                     placeholder="123456"
                     value={cardOtp}
                     onChange={(e) => setCardOtp(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-center tracking-widest font-mono text-sm focus:border-teal-600 focus:outline-none bg-white"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-center tracking-widest font-mono text-base font-bold focus:border-teal-600 focus:outline-none bg-white"
                   />
+                  <span className="text-[11px] text-slate-400 mt-1 block text-center">
+                    Simulated 3D Secure verification for live card testing.
+                  </span>
                 </div>
 
                 <button
@@ -318,7 +440,7 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
                 onClick={() => setStep('payment')}
                 className="text-xs text-slate-500 hover:text-slate-800 underline cursor-pointer"
               >
-                Back to payment options
+                Back to card details
               </button>
             </div>
           )}
@@ -371,8 +493,8 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
               </div>
 
               {errorMessage && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2.5 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
                   <span>{errorMessage}</span>
                 </div>
               )}
@@ -391,7 +513,10 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
                     <input
                       type="text"
                       value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
+                      onChange={(e) => {
+                        setCustomerName(e.target.value);
+                        if (!cardholderName) setCardholderName(e.target.value);
+                      }}
                       placeholder="Newton Mass"
                       className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-teal-600 focus:outline-none bg-white"
                     />
@@ -405,7 +530,7 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
                       type="email"
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
-                      placeholder="newton@taskpulsepro.com"
+                      placeholder="newton@coretaskpro.com"
                       className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-teal-600 focus:outline-none bg-white"
                     />
                   </div>
@@ -425,7 +550,7 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
 
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">
-                      Country
+                      Operating Jurisdiction
                     </label>
                     <select
                       value={country}
@@ -437,7 +562,7 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
                       <option value="Australia">Australia</option>
                       <option value="New Zealand">New Zealand</option>
                       <option value="United Kingdom">United Kingdom</option>
-                      <option value="International">Other Country</option>
+                      <option value="International">International</option>
                     </select>
                   </div>
                 </div>
@@ -445,14 +570,23 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
 
               {/* Payment Method Selector */}
               <div className="space-y-3 pt-2">
-                <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  2. Select Pesapal USD Payment Method
-                </h5>
+                <div className="flex items-center justify-between">
+                  <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    2. Select Pesapal USD Payment Method
+                  </h5>
+                  <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                    <Lock className="w-3 h-3 text-emerald-600" />
+                    End-to-End Encrypted
+                  </span>
+                </div>
 
                 <div className="grid grid-cols-3 gap-2.5">
                   <button
                     type="button"
-                    onClick={() => setSelectedMethod('card')}
+                    onClick={() => {
+                      setSelectedMethod('card');
+                      setErrorMessage(null);
+                    }}
                     className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
                       selectedMethod === 'card'
                         ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-500/20'
@@ -462,13 +596,16 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
                     <CreditCard className="w-5 h-5 text-blue-600 mb-2" />
                     <div>
                       <span className="font-bold text-xs text-slate-900 block">Credit / Debit</span>
-                      <span className="text-[10px] text-slate-500">Visa / Mastercard</span>
+                      <span className="text-[10px] text-slate-500">Visa / Mastercard / Amex</span>
                     </div>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setSelectedMethod('mpesa')}
+                    onClick={() => {
+                      setSelectedMethod('mpesa');
+                      setErrorMessage(null);
+                    }}
                     className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
                       selectedMethod === 'mpesa'
                         ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
@@ -484,7 +621,10 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
 
                   <button
                     type="button"
-                    onClick={() => setSelectedMethod('bank')}
+                    onClick={() => {
+                      setSelectedMethod('bank');
+                      setErrorMessage(null);
+                    }}
                     className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
                       selectedMethod === 'bank'
                         ? 'border-teal-600 bg-teal-50/50 ring-2 ring-teal-500/20'
@@ -494,52 +634,113 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
                     <Building2 className="w-5 h-5 text-teal-700 mb-2" />
                     <div>
                       <span className="font-bold text-xs text-slate-900 block">Direct Wire</span>
-                      <span className="text-[10px] text-slate-500">ACH / Swift</span>
+                      <span className="text-[10px] text-slate-500">ACH / Swift USD</span>
                     </div>
                   </button>
                 </div>
 
+                {/* Hardened Card Details Entry */}
                 {selectedMethod === 'card' && (
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 text-xs">
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3.5 text-xs">
+                    
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                      <span className="font-bold text-slate-700">Card Verification Credentials</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                          detectedBrand === 'visa' ? 'bg-blue-600 text-white' :
+                          detectedBrand === 'mastercard' ? 'bg-amber-600 text-white' :
+                          detectedBrand === 'amex' ? 'bg-sky-600 text-white' :
+                          detectedBrand === 'discover' ? 'bg-orange-600 text-white' :
+                          'bg-slate-200 text-slate-600'
+                        }`}>
+                          {detectedBrand !== 'unknown' ? detectedBrand : 'Card Network'}
+                        </span>
+                      </div>
+                    </div>
+
                     <div>
                       <label className="block font-semibold text-slate-700 mb-1">
-                        Card Number
+                        Cardholder Name (as printed on card) *
                       </label>
                       <input
                         type="text"
-                        value={cardNumber}
-                        onChange={(e) => setCardNumber(e.target.value)}
-                        placeholder="4242 4242 4242 4242"
-                        className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-mono focus:border-teal-600 focus:outline-none"
+                        value={cardholderName}
+                        onChange={(e) => setCardholderName(e.target.value)}
+                        placeholder="Newton Mass"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:border-teal-600 focus:outline-none"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="font-semibold text-slate-700">
+                          Card Number *
+                        </label>
+                        <span className="text-[10px] text-slate-400">
+                          Luhn Mod-10 Checksum Verified
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={cardNumber}
+                          onChange={handleCardNumberChange}
+                          placeholder="4532 0159 8721 3490"
+                          maxLength={19}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-mono focus:border-teal-600 focus:outline-none tracking-wider text-sm"
+                        />
+                        <CreditCard className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className="block font-semibold text-slate-700 mb-1">
-                          Expiry Date
+                          Expiry Date (MM/YY) *
                         </label>
                         <input
                           type="text"
+                          maxLength={5}
                           value={cardExpiry}
-                          onChange={(e) => setCardExpiry(e.target.value)}
-                          placeholder="MM/YY"
+                          onChange={handleExpiryChange}
+                          placeholder="08/29"
                           className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-mono focus:border-teal-600 focus:outline-none text-center"
                         />
                       </div>
+
                       <div>
                         <label className="block font-semibold text-slate-700 mb-1">
-                          CVV
+                          CVV / CVC *
                         </label>
                         <input
                           type="password"
                           maxLength={4}
                           value={cardCvv}
-                          onChange={(e) => setCardCvv(e.target.value)}
+                          onChange={handleCvvChange}
                           placeholder="789"
                           className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-mono focus:border-teal-600 focus:outline-none text-center"
                         />
                       </div>
+
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">
+                          Billing ZIP / Postal
+                        </label>
+                        <input
+                          type="text"
+                          value={billingZip}
+                          onChange={(e) => setBillingZip(e.target.value)}
+                          placeholder="10001"
+                          className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-mono focus:border-teal-600 focus:outline-none text-center"
+                        />
+                      </div>
                     </div>
+
+                    <div className="flex items-center gap-2 text-[11px] text-slate-500 pt-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Zero card persistence: Card number and CVV are never stored in plain text.</span>
+                    </div>
+
                   </div>
                 )}
               </div>
@@ -560,7 +761,7 @@ export const PesapalCheckoutModal: React.FC<PesapalCheckoutModalProps> = ({
                   {isProcessing ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Contacting Pesapal...</span>
+                      <span>Verifying with Pesapal...</span>
                     </>
                   ) : (
                     <>

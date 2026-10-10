@@ -112,6 +112,7 @@ export interface ReviewerAccount {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  operatingCountry?: string;
   inviteCode: string;
   referralLink: string;
   walletBalance: number; // in USD ($)

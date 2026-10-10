@@ -15,14 +15,24 @@ interface PlansPaymentViewProps {
   plans: SubscriptionPlan[];
   account: ReviewerAccount;
   onActivatePlan: (plan: SubscriptionPlan) => void;
+  onUpdateOperatingCountry?: (country: string) => void;
 }
 
 export const PlansPaymentView: React.FC<PlansPaymentViewProps> = ({
   plans,
   account,
   onActivatePlan,
+  onUpdateOperatingCountry,
 }) => {
-  const [selectedCountry, setSelectedCountry] = useState('United States (USD)');
+  const [selectedCountry, setSelectedCountry] = useState(
+    account.operatingCountry ? `${account.operatingCountry} (USD)` : 'United States (USD)'
+  );
+
+  const handleCountryChange = (val: string) => {
+    setSelectedCountry(val);
+    const countryName = val.replace(' (USD)', '').replace(' Worldwide', '');
+    onUpdateOperatingCountry?.(countryName);
+  };
 
   return (
     <div className="space-y-6">
@@ -40,18 +50,23 @@ export const PlansPaymentView: React.FC<PlansPaymentViewProps> = ({
       {/* Country Selector Box */}
       <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs space-y-3">
         <div>
-          <h3 className="font-bold text-slate-900 text-sm sm:text-base">
-            Reviewer Operating Country / Region
-          </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Select your operating jurisdiction. Payouts and plan charges are processed in USD ($) via Pesapal.
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+              Your Operating Country / Region
+            </h3>
+            <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">
+              Payment & Task Routing
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">
+            Choose where you reside or operate. This connects your account to Pesapal's secure USD payment routing and matches you with verified review tasks in your territory.
           </p>
         </div>
 
         <div className="max-w-md">
           <select
             value={selectedCountry}
-            onChange={(e) => setSelectedCountry(e.target.value)}
+            onChange={(e) => handleCountryChange(e.target.value)}
             className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:border-[#0D7A6B] cursor-pointer"
           >
             <option value="United States (USD)">United States (USD)</option>
@@ -61,6 +76,17 @@ export const PlansPaymentView: React.FC<PlansPaymentViewProps> = ({
             <option value="United Kingdom (USD)">United Kingdom (USD)</option>
             <option value="International (USD)">International Worldwide (USD)</option>
           </select>
+        </div>
+
+        <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-4 text-[11px] text-slate-500">
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            Billed and rewarded in standard US Dollars ($ USD)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            Automatic local card network compliance
+          </span>
         </div>
       </div>
 

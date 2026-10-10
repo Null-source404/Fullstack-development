@@ -147,6 +147,15 @@ export default function App() {
     showToast(`Pesapal payment verified! ${activatedPlan.title} activated successfully.`);
   };
 
+  // Update reviewer operating country
+  const handleUpdateOperatingCountry = (country: string) => {
+    setAccount((prev) => ({
+      ...prev,
+      operatingCountry: country,
+    }));
+    showToast(`Operating region updated to ${country}. Payment routing and tasks synchronized.`);
+  };
+
   // Auth screen success (login/signup)
   const handleAuthSuccess = (accountData: Partial<ReviewerAccount>) => {
     setAccount((prev) => ({
@@ -324,6 +333,7 @@ export default function App() {
               plans={plans}
               account={account}
               onActivatePlan={(plan) => handleOpenCheckout(plan)}
+              onUpdateOperatingCountry={handleUpdateOperatingCountry}
             />
           )}
 
