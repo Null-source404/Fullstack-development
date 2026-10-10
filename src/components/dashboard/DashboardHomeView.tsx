@@ -104,7 +104,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
             </div>
           </div>
           <div className="mt-4">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-mono tabular-nums">
               ${account.walletBalance.toFixed(2)}
             </span>
             <span className="text-[11px] text-slate-400 block mt-1 font-medium">
@@ -122,7 +122,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
             </div>
           </div>
           <div className="mt-4">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-mono tabular-nums">
               ${account.lifetimeEarned.toFixed(2)}
             </span>
             <span className="text-[11px] text-slate-400 block mt-1 font-medium">
@@ -140,7 +140,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
             </div>
           </div>
           <div className="mt-4">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-mono tabular-nums">
               ${account.referralCommission.toFixed(2)}
             </span>
             <span className="text-[11px] text-slate-400 block mt-1 font-medium">
@@ -158,7 +158,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
             </div>
           </div>
           <div className="mt-4">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-mono tabular-nums">
               ${account.totalWithdrawn.toFixed(2)}
             </span>
             <span className="text-[11px] text-slate-400 block mt-1 font-medium">

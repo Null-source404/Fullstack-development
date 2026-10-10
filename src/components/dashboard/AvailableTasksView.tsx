@@ -5,9 +5,8 @@ import {
   Unlock,
   MapPin,
   Building2,
-  Filter,
-  DollarSign,
-  AlertCircle
+  FilterX,
+  Sparkles
 } from 'lucide-react';
 import { ReviewTask, ReviewerAccount } from '../../types';
 
@@ -49,6 +48,14 @@ export const AvailableTasksView: React.FC<AvailableTasksViewProps> = ({
       return b.reward - a.reward;
     });
 
+  const isFiltered = searchTerm !== '' || selectedCountry !== 'All countries' || selectedCategory !== 'All categories';
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setSelectedCountry('All countries');
+    setSelectedCategory('All categories');
+  };
+
   return (
     <div className="space-y-6">
       
@@ -58,32 +65,34 @@ export const AvailableTasksView: React.FC<AvailableTasksViewProps> = ({
           Available tasks
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          One review per business. Only businesses inside your plan's countries can be submitted.
+          One review per verified business. Only businesses inside your plan's countries can be submitted.
         </p>
       </div>
 
-      {/* Filter & Search Bar matching screenshot */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
+      {/* Filter & Search Bar */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
         <div className="flex flex-col md:flex-row gap-3">
           
           {/* Search Input */}
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
+              aria-label="Search businesses by name or location"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search businesses by name"
-              className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-[#1D4ED8]"
+              placeholder="Search businesses by name or city"
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-[#1D4ED8] bg-white transition-colors"
             />
           </div>
 
           {/* Country Filter */}
-          <div className="w-full md:w-48">
+          <div className="w-full md:w-52">
             <select
+              aria-label="Filter by country"
               value={selectedCountry}
               onChange={(e) => setSelectedCountry(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-[#1D4ED8] bg-white cursor-pointer"
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-[#1D4ED8] bg-white cursor-pointer transition-colors"
             >
               <option value="All countries">All countries</option>
               <option value="United States">United States</option>
@@ -96,11 +105,12 @@ export const AvailableTasksView: React.FC<AvailableTasksViewProps> = ({
           </div>
 
           {/* Category Filter */}
-          <div className="w-full md:w-48">
+          <div className="w-full md:w-52">
             <select
+              aria-label="Filter by business category"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-[#1D4ED8] bg-white cursor-pointer"
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-[#1D4ED8] bg-white cursor-pointer transition-colors"
             >
               <option value="All categories">All categories</option>
               <option value="Restaurants & Food">Restaurants & Food</option>
@@ -112,100 +122,138 @@ export const AvailableTasksView: React.FC<AvailableTasksViewProps> = ({
             </select>
           </div>
 
-          <button
-            type="button"
-            className="px-5 py-2 bg-[#1D4ED8] hover:bg-[#1a44bc] text-white font-bold text-xs sm:text-sm rounded-xl transition-colors cursor-pointer"
-          >
-            Search
-          </button>
+          {isFiltered && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs sm:text-sm rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+            >
+              <FilterX className="w-4 h-4" />
+              <span>Reset</span>
+            </button>
+          )}
         </div>
 
         {/* Status subtext */}
-        <p className="text-xs text-slate-500 pt-1">
-          {!account.isSubscribed ? (
-            <span>You have no active plan, so every task is locked. {filteredTasks.length} tasks match your filters.</span>
-          ) : (
-            <span className="text-emerald-700 font-medium">Your plan is active. You can claim and write reviews for tasks in your unlocked countries.</span>
-          )}
-        </p>
+        <div className="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
+          <span>
+            {!account.isSubscribed ? (
+              <span>Plan required to submit reviews. <strong>{filteredTasks.length}</strong> tasks available in database.</span>
+            ) : (
+              <span className="text-emerald-700 font-medium">Your plan is active. You can claim and write reviews for tasks in your unlocked territory.</span>
+            )}
+          </span>
+          <span className="text-[11px] text-slate-400 font-mono tabular-nums">
+            Showing {filteredTasks.length} of {tasks.length}
+          </span>
+        </div>
       </div>
 
-      {/* Task List Items matching Screenshot 7 */}
-      <div className="space-y-3">
-        {filteredTasks.map((task) => (
-          <div
-            key={task.id}
-            className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-          >
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-slate-900 text-base">
-                  {task.businessName}
-                </h3>
-                <span className="text-[11px] font-semibold bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full">
-                  {task.category}
-                </span>
-                {account.operatingCountry && task.country === account.operatingCountry && (
-                  <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Your Territory
-                  </span>
-                )}
-                {!account.isSubscribed && (
-                  <span className="text-[11px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                    Locked
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
-                <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                <span>{task.location}</span>
-              </div>
-
-              <div className="flex items-center gap-1 text-xs text-slate-600 mt-1">
-                <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                <span>Write a review for {task.businessName}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center sm:flex-col sm:items-end justify-between sm:justify-center gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-              <div>
-                <span className="text-xl font-extrabold text-[#1D4ED8]">
-                  ${task.reward.toFixed(2)}
-                </span>
-                <span className="text-[11px] text-slate-400 block sm:text-right">reward</span>
-              </div>
-
-              <button
-                onClick={() => {
-                  if (!account.isSubscribed) {
-                    onOpenPlans();
-                  } else {
-                    onSelectTask(task);
-                  }
-                }}
-                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
-                  !account.isSubscribed
-                    ? 'border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
-                    : 'bg-[#0D7A6B] hover:bg-[#0a6357] text-white shadow-xs'
-                }`}
-              >
-                {!account.isSubscribed ? (
-                  <>
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>Unlock</span>
-                  </>
-                ) : (
-                  <>
-                    <Unlock className="w-3.5 h-3.5" />
-                    <span>Write review</span>
-                  </>
-                )}
-              </button>
-            </div>
+      {/* Task List Items */}
+      {filteredTasks.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center space-y-4">
+          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+            <Search className="w-6 h-6" />
           </div>
-        ))}
-      </div>
+          <div>
+            <h3 className="font-bold text-slate-900 text-base">No tasks match your filters</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+              Try adjusting your search terms, selecting a different country, or clearing your category filter.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            className="px-5 py-2.5 bg-[#1D4ED8] hover:bg-[#1a44bc] text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+          >
+            Clear all filters
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredTasks.map((task) => {
+            const isLocal = account.operatingCountry && task.country === account.operatingCountry;
+
+            return (
+              <div
+                key={task.id}
+                className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              >
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-bold text-slate-900 text-base">
+                      {task.businessName}
+                    </h3>
+                  </div>
+
+                  {/* Clean unboxed metadata discipline */}
+                  <div className="flex items-center flex-wrap gap-2 text-xs text-slate-500">
+                    <span className="font-medium text-slate-700">{task.category}</span>
+                    <span aria-hidden="true">·</span>
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span>{task.location}</span>
+                    </span>
+                    {isLocal && (
+                      <>
+                        <span aria-hidden="true">·</span>
+                        <span className="text-emerald-700 font-semibold">Your Territory</span>
+                      </>
+                    )}
+                    {!account.isSubscribed && (
+                      <>
+                        <span aria-hidden="true">·</span>
+                        <span className="text-slate-400">Subscription Required</span>
+                      </>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-slate-600 line-clamp-1">
+                    {task.description}
+                  </p>
+                </div>
+
+                <div className="flex items-center sm:flex-col sm:items-end justify-between sm:justify-center gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                  <div className="text-left sm:text-right">
+                    <span className="text-xl font-extrabold text-[#1D4ED8] font-mono tabular-nums">
+                      ${task.reward.toFixed(2)}
+                    </span>
+                    <span className="text-[11px] text-slate-400 block font-sans">USD per review</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!account.isSubscribed) {
+                        onOpenPlans();
+                      } else {
+                        onSelectTask(task);
+                      }
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[40px] ${
+                      !account.isSubscribed
+                        ? 'border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                        : 'bg-[#0D7A6B] hover:bg-[#0a6357] text-white shadow-xs'
+                    }`}
+                  >
+                    {!account.isSubscribed ? (
+                      <>
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>Unlock</span>
+                      </>
+                    ) : (
+                      <>
+                        <Unlock className="w-3.5 h-3.5" />
+                        <span>Write review</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
     </div>
   );

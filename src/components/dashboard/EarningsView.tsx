@@ -6,9 +6,9 @@ import {
   Banknote,
   CheckCircle2,
   AlertCircle,
-  Clock,
-  History,
-  CreditCard
+  CreditCard,
+  Building2,
+  ArrowRight
 } from 'lucide-react';
 import { ReviewerAccount } from '../../types';
 
@@ -70,7 +70,7 @@ export const EarningsView: React.FC<EarningsViewProps> = ({
         </p>
       </div>
 
-      {/* 4 Top KPI Cards */}
+      {/* 4 Top KPI Cards with Tabular Figures */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* Available */}
@@ -82,11 +82,11 @@ export const EarningsView: React.FC<EarningsViewProps> = ({
             </div>
           </div>
           <div className="mt-4">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-mono tabular-nums">
               ${account.walletBalance.toFixed(2)}
             </span>
-            <span className="text-[11px] text-slate-400 block mt-1 font-medium">
-              ${account.walletBalance.toFixed(2)} USD free to withdraw
+            <span className="text-[11px] text-slate-400 block mt-1 font-sans">
+              Free to withdraw
             </span>
           </div>
         </div>
@@ -100,10 +100,10 @@ export const EarningsView: React.FC<EarningsViewProps> = ({
             </div>
           </div>
           <div className="mt-4">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-mono tabular-nums">
               ${pendingAmount.toFixed(2)}
             </span>
-            <span className="text-[11px] text-slate-400 block mt-1 font-medium">
+            <span className="text-[11px] text-slate-400 block mt-1 font-sans">
               Credited in USD on approval
             </span>
           </div>
@@ -118,10 +118,10 @@ export const EarningsView: React.FC<EarningsViewProps> = ({
             </div>
           </div>
           <div className="mt-4">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-mono tabular-nums">
               ${account.lifetimeEarned.toFixed(2)}
             </span>
-            <span className="text-[11px] text-slate-400 block mt-1 font-medium">
+            <span className="text-[11px] text-slate-400 block mt-1 font-sans">
               Total USD earned to date
             </span>
           </div>
@@ -136,105 +136,112 @@ export const EarningsView: React.FC<EarningsViewProps> = ({
             </div>
           </div>
           <div className="mt-4">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-mono tabular-nums">
               ${account.totalWithdrawn.toFixed(2)}
             </span>
-            <span className="text-[11px] text-slate-400 block mt-1 font-medium">
-              Paid out via Pesapal
+            <span className="text-[11px] text-slate-400 block mt-1 font-sans">
+              Transferred to account
             </span>
           </div>
         </div>
 
       </div>
 
-      {/* Main Split Row */}
+      {/* Main Grid: Request Withdrawal vs History */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Left: Request a withdrawal Form */}
+        {/* Left: Request Form */}
         <div className="lg:col-span-6 bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs space-y-4">
-          <h3 className="font-bold text-slate-900 text-base">
-            Request USD Withdrawal
-          </h3>
+          <div>
+            <h3 className="font-bold text-slate-900 text-base">
+              Request USD Payout
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Select your payment channel and enter the amount you wish to withdraw via Pesapal.
+            </p>
+          </div>
+
+          {statusMsg && (
+            <div
+              className={`p-3.5 rounded-xl text-xs flex items-center gap-2.5 ${
+                statusMsg.type === 'error'
+                  ? 'bg-red-50 border border-red-200 text-red-700'
+                  : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+              }`}
+            >
+              {statusMsg.type === 'error' ? (
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+              )}
+              <span>{statusMsg.text}</span>
+            </div>
+          )}
 
           <form onSubmit={handleWithdrawSubmit} className="space-y-4 text-xs sm:text-sm">
             <div>
-              <label className="block font-semibold text-slate-700 mb-1.5">
-                Amount (USD $)
+              <label htmlFor="withdraw-amount-input" className="block font-semibold text-slate-700 mb-1">
+                Amount to Withdraw ($ USD)
               </label>
-              <input
-                type="number"
-                step="0.01"
-                value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(e.target.value)}
-                placeholder="0.00"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 font-mono text-sm focus:outline-none focus:border-[#0D7A6B]"
-              />
-              <button
-                type="button"
-                onClick={() => setWithdrawAmount(account.walletBalance.toFixed(2))}
-                className="text-xs text-[#0D7A6B] hover:underline mt-1 font-semibold cursor-pointer"
-              >
-                Withdraw full available balance (${account.walletBalance.toFixed(2)} USD)
-              </button>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-sm">$</span>
+                <input
+                  id="withdraw-amount-input"
+                  type="number"
+                  step="0.01"
+                  min="1"
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0D7A6B] bg-white font-mono tabular-nums text-sm"
+                />
+              </div>
+              <span className="text-[11px] text-slate-400 mt-1 block">
+                Available to withdraw: <strong className="font-mono tabular-nums text-slate-700">${account.walletBalance.toFixed(2)} USD</strong>
+              </span>
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-700 mb-1.5">
-                Payout Channel
+              <label htmlFor="payout-method-select" className="block font-semibold text-slate-700 mb-1">
+                Payout Channel (via Pesapal)
               </label>
               <select
+                id="payout-method-select"
                 value={payoutMethod}
                 onChange={(e) => setPayoutMethod(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#0D7A6B] cursor-pointer"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0D7A6B] bg-white cursor-pointer"
               >
-                <option value="Pesapal Direct Card">Pesapal Direct Card / Bank Payout (USD)</option>
-                <option value="Pesapal Mobile Wallet">Pesapal Mobile Wallet (M-Pesa / Airtel Money)</option>
-                <option value="International Wire">International Bank Wire (ACH / Swift)</option>
+                <option value="Pesapal Direct Card">Direct Credit/Debit Card (Visa/Mastercard)</option>
+                <option value="Pesapal Wallet">Pesapal USD Digital Wallet</option>
+                <option value="Direct Wire / Bank">International Bank Wire (ACH/SWIFT)</option>
               </select>
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-700 mb-1.5">
-                Recipient Email / Account Identifier
+              <label htmlFor="recipient-account-input" className="block font-semibold text-slate-700 mb-1">
+                Recipient Email or Account ID
               </label>
               <input
+                id="recipient-account-input"
                 type="text"
                 value={recipientAccount}
                 onChange={(e) => setRecipientAccount(e.target.value)}
-                placeholder="account@domain.com"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0D7A6B]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0D7A6B] bg-white"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-[#0F3460] hover:bg-[#0c2a4f] text-white font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
-            >
-              Submit USD Withdrawal
-            </button>
-          </form>
-
-          {statusMsg && (
-            <div
-              className={`p-3.5 rounded-xl text-xs flex items-start gap-2.5 ${
-                statusMsg.type === 'error'
-                  ? 'bg-amber-50 border border-amber-200 text-amber-900'
-                  : 'bg-emerald-50 border border-emerald-200 text-emerald-900'
+              disabled={account.walletBalance <= 0}
+              className={`w-full py-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
+                account.walletBalance <= 0
+                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                  : 'bg-[#0D7A6B] hover:bg-[#0a6357] text-white shadow-xs cursor-pointer active:scale-98'
               }`}
             >
-              {statusMsg.type === 'error' ? (
-                <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-              ) : (
-                <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-              )}
-              <div className="space-y-1">
-                <span className="font-bold block">
-                  {statusMsg.type === 'error' ? 'Insufficient balance' : 'Request Transmitted'}
-                </span>
-                <p>{statusMsg.text}</p>
-              </div>
-            </div>
-          )}
+              <Banknote className="w-4 h-4" />
+              <span>Submit Withdrawal Request</span>
+            </button>
+          </form>
         </div>
 
         {/* Right: Withdrawal History & Recent Activity */}
@@ -262,10 +269,10 @@ export const EarningsView: React.FC<EarningsViewProps> = ({
                 {account.withdrawals.map((w) => (
                   <div
                     key={w.id}
-                    className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between text-xs"
+                    className="p-3.5 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between text-xs"
                   >
                     <div>
-                      <span className="font-bold text-slate-900 block">
+                      <span className="font-bold text-slate-900 block font-mono tabular-nums">
                         ${w.amountUsd.toFixed(2)} USD to {w.method}
                       </span>
                       <span className="text-[11px] text-slate-500">
@@ -273,7 +280,7 @@ export const EarningsView: React.FC<EarningsViewProps> = ({
                       </span>
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold">
+                      <span className="text-[11px] font-semibold text-emerald-700 block">
                         {w.status.toUpperCase()}
                       </span>
                       <span className="text-[10px] text-slate-400 block mt-0.5">
@@ -290,18 +297,18 @@ export const EarningsView: React.FC<EarningsViewProps> = ({
             <h3 className="font-bold text-slate-900 text-sm sm:text-base">
               Recent USD Activity
             </h3>
-            <div className="text-xs text-slate-400">
+            <div className="text-xs text-slate-500">
               {account.submittedReviews.length > 0 ? (
                 <div className="space-y-2">
                   {account.submittedReviews.slice(0, 3).map((r) => (
-                    <div key={r.id} className="flex items-center justify-between py-1 border-b border-slate-100">
+                    <div key={r.id} className="flex items-center justify-between py-1.5 border-b border-slate-100">
                       <span className="text-slate-700">Review: {r.businessName}</span>
-                      <span className="font-bold text-[#0D7A6B]">+${r.reward.toFixed(2)} USD</span>
+                      <span className="font-bold text-[#0D7A6B] font-mono tabular-nums">+${r.reward.toFixed(2)} USD</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-[11px]">No activity in the last 30 days.</p>
+                <p className="text-[11px] text-slate-400">No activity in the last 30 days.</p>
               )}
             </div>
           </div>

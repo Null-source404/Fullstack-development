@@ -138,14 +138,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {/* Left Column: Heading and CTAs */}
             <div className="lg:col-span-7 space-y-6">
               
-              {/* Green bullet pill matching screenshot */}
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-emerald-800 text-xs font-medium">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span>Paying reviewers since 2024</span>
+              {/* Editorial kicker */}
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-800">
+                <span>Verified Review Platform</span>
+                <span aria-hidden="true">·</span>
+                <span>Rewarding Reviewers Worldwide</span>
               </div>
 
-              {/* Exact Headline */}
-              <h1 className="text-4xl sm:text-5xl lg:text-[54px] font-extrabold tracking-tight text-slate-900 leading-[1.12]">
+              {/* Headline with text-balance */}
+              <h1 className="text-4xl sm:text-5xl lg:text-[54px] font-extrabold tracking-tight text-slate-900 leading-[1.12] text-balance">
                 Write honest reviews.<br />
                 <span className="text-[#1d4ed8]">Get paid</span> for every one.
               </h1>

@@ -93,15 +93,15 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
             <div>
               <span className="text-xs text-slate-500 block">Reward per review</span>
-              <span className="text-2xl font-extrabold text-[#0D7A6B]">
+              <span className="text-2xl font-extrabold text-[#0D7A6B] font-mono tabular-nums">
                 ${task.reward.toFixed(2)} USD
               </span>
               <span className="text-[11px] text-slate-500 block font-medium">Pesapal USD Settlement</span>
             </div>
             <div>
               <span className="text-xs text-slate-500 block">Available Slots</span>
-              <span className="text-2xl font-extrabold text-slate-900">
-                {task.slotsLeft} <span className="text-sm font-normal text-slate-500">/ {task.totalSlots}</span>
+              <span className="text-2xl font-extrabold text-slate-900 font-mono tabular-nums">
+                {task.slotsLeft} <span className="text-sm font-normal text-slate-500 font-sans">/ {task.totalSlots}</span>
               </span>
               <span className="text-[11px] text-slate-500 block">24–48h Review Turnaround</span>
             </div>

@@ -38,23 +38,25 @@ export const MyReviewsView: React.FC<MyReviewsViewProps> = ({
             My reviews
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Rewards are credited as soon as a moderator approves your review.
+            Rewards are credited as soon as a moderator approves your evaluation.
           </p>
         </div>
 
         <button
           onClick={() => onNavigateTab('tasks')}
-          className="inline-flex items-center gap-2 bg-[#1D4ED8] hover:bg-[#1a44bc] text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-xs transition-colors cursor-pointer self-start sm:self-auto"
+          className="inline-flex items-center gap-2 bg-[#1D4ED8] hover:bg-[#1a44bc] text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-xs transition-colors cursor-pointer self-start sm:self-auto min-h-[40px]"
         >
           <span>Write another</span>
+          <ArrowRight className="w-4 h-4" />
         </button>
       </div>
 
-      <p className="text-xs text-slate-500">
-        Reviews take at most 4 business days to be checked.
-      </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500">
+        <p>Reviews take at most 2–4 business days to be checked for authenticity.</p>
+        <span className="font-mono tabular-nums text-slate-400">Total submitted: {account.submittedReviews.length}</span>
+      </div>
 
-      {/* Tabs */}
+      {/* Filter Tabs - Interactive Segmented Control */}
       <div className="flex items-center gap-1.5 p-1 bg-slate-200/60 rounded-xl w-fit text-xs font-semibold">
         {(['All', 'Pending', 'Approved', 'Rejected'] as const).map((tab) => (
           <button
@@ -88,7 +90,7 @@ export const MyReviewsView: React.FC<MyReviewsViewProps> = ({
           <div className="pt-2">
             <button
               onClick={() => onNavigateTab('tasks')}
-              className="px-5 py-2.5 bg-[#1D4ED8] hover:bg-[#1a44bc] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+              className="px-5 py-2.5 bg-[#1D4ED8] hover:bg-[#1a44bc] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer min-h-[40px]"
             >
               Browse tasks
             </button>
@@ -115,25 +117,25 @@ export const MyReviewsView: React.FC<MyReviewsViewProps> = ({
                         />
                       ))}
                     </div>
-                    <span className="text-xs font-bold text-slate-700">{rev.rating}.0</span>
+                    <span className="text-xs font-bold text-slate-700 font-mono tabular-nums">{rev.rating}.0</span>
                     <span className="text-xs text-slate-400">· Visit date: {rev.visitDate}</span>
                   </div>
                 </div>
 
                 <div className="text-right shrink-0">
-                  <span className="text-lg font-extrabold text-slate-900 block">
+                  <span className="text-lg font-extrabold text-slate-900 block font-mono tabular-nums">
                     +${rev.reward.toFixed(2)}
                   </span>
                   <span
-                    className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                    className={`text-xs font-semibold block mt-0.5 ${
                       rev.status === 'approved'
-                        ? 'bg-emerald-100 text-emerald-800'
+                        ? 'text-emerald-700'
                         : rev.status === 'rejected'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-blue-100 text-blue-800'
+                        ? 'text-red-700'
+                        : 'text-blue-700'
                     }`}
                   >
-                    {rev.status === 'approved' ? 'Approved & Credited' : 'Under Moderation'}
+                    {rev.status === 'approved' ? '✓ Approved & Credited' : rev.status === 'rejected' ? '✕ Rejected' : '⏳ Moderating'}
                   </span>
                 </div>
               </div>
@@ -144,7 +146,7 @@ export const MyReviewsView: React.FC<MyReviewsViewProps> = ({
 
               <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
                 <span>Submitted {rev.submittedAt}</span>
-                <span>Review ID: {rev.id}</span>
+                <span className="font-mono">ID: {rev.id}</span>
               </div>
             </div>
           ))}
